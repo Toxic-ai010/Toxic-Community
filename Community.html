@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Toxic Community</title>
+<style>
+html, body {
+  margin:0;
+  padding:0;
+  height:100%;
+  font-family: Arial, sans-serif;
+  overflow: hidden;
+  background: #000010;
+  color: #0af;
+}
+
+/* Sterne & Kometen */
+#stars, #comets {
+  position: fixed;
+  top:0; left:0; width:100%; height:100%;
+  pointer-events:none;
+  z-index:0;
+}
+.star { position:absolute; border-radius:50%; background:white; opacity:0.8; animation:twinkle 2s infinite alternate; }
+@keyframes twinkle { 0%{opacity:0.2;} 50%{opacity:0.8;} 100%{opacity:0.2;} }
+.comet { position:absolute; border-radius:50%; background:linear-gradient(45deg, white, rgba(255,255,255,0)); animation:cometMove linear infinite; }
+@keyframes cometMove { 0%{transform:translate(-100px,-100px) rotate(0deg);opacity:1;} 100%{transform:translate(1200px,800px) rotate(45deg);opacity:0;} }
+
+/* Willkommensbildschirm */
+#welcomeScreen {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display:flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+#welcomeScreen h1 { font-size:48px; color:#0af; text-shadow:0 0 20px #0af; margin-bottom:20px; }
+#welcomeScreen p { font-size:22px; color:#aaa; margin-bottom:40px; }
+#welcomeScreen button { padding:15px 40px; font-size:20px; color:#000; background-color:#0af; border:none; border-radius:8px; cursor:pointer; transition:0.3s; }
+#welcomeScreen button:hover { background-color:#09c; box-shadow:0 0 15px #0af; }
+
+/* Hauptinhalt */
+#mainContent { display:none; height:100vh; padding:20px; display:flex; gap:20px; position:relative; color:#eee; }
+#topRight { position:fixed; top:20px; right:20px; font-size:24px; font-weight:bold; color:#0af; display:flex; align-items:center; gap:15px; user-select:none; z-index:2; }
+#topRight a { color:#0af; text-decoration:none; font-weight:bold; }
+#leftSide { flex:1; max-width:600px; display:flex; flex-direction:column; position:relative; z-index:1; }
+
+/* Gruppenchat */
+#chatContainer { position:relative; width:100%; height:300px; overflow:hidden; border-radius:8px; margin-bottom:10px; background-color:transparent; }
+#chatBox { height:100%; overflow-y:auto; padding:15px; font-size:14px; color:#ddd; background-color:transparent; }
+#resizer { width:15px; height:15px; background:#0af; position:absolute; right:5px; bottom:5px; cursor:se-resize; border-radius:3px; box-shadow:0 0 6px #0af; }
+input, select, textarea { background-color:#121212; border:1px solid #222; color:#eee; padding:10px; border-radius:6px; font-size:16px; outline:none; margin-right:10px; }
+input::placeholder, textarea::placeholder { color:#666; }
+button { background-color:#000; color:#0af; border:1px solid #0af; padding:10px 20px; border-radius:6px; cursor:pointer; transition:0.3s; font-weight:bold; }
+button:hover { background-color:#0af; color:#000; }
+.groupSelect { margin-bottom:15px; }
+h2 { color:#0af; margin-top:0; }
+
+/* KI Chat */
+#rightSide { width:350px; display:none; flex-direction:column; height:450px; position:absolute; top:50px; right:20px; cursor:move; z-index:2; border:1px solid #222; border-radius:8px; box-shadow:0 0 8px #000; background-color:#121212; padding:10px; }
+#kiChatBox { flex:1; background-color:#121212; border-radius:8px; padding:15px; overflow-y:auto; font-size:14px; margin-bottom:10px; }
+#kiInputArea { display:flex; gap:10px; }
+#kiInput { flex:1; }
+
+/* Discord-Link unten links */
+#discordLink a { color:#0af; text-decoration:none; font-weight:bold; position:fixed; bottom:20px; left:20px; z-index:2; }
+</style>
+</head>
+<body>
+
+<!-- Sterne & Kometen -->
+<div id="stars"></div>
+<div id="comets"></div>
+
+<!-- Willkommensbildschirm -->
+<div id="welcomeScreen">
+  <h1>Willkommen auf der Community-Webseite von Toxic!</h1>
+  <p>Tauche ein in unsere Community und entdecke spannende Chats und die KI-Hilfe.</p>
+  <button onclick="enterWebsite()">Zur Webseite</button>
+</div>
+
+<!-- Hauptinhalt -->
+<div id="mainContent">
+  <div id="topRight">
+    Toxic
+    <a href="https://www.tiktok.com/@vexofn010" target="_blank">TikTok</a>
+  </div>
+
+  <div id="leftSide">
+    <h2>Gruppen Chat</h2>
+    <div class="groupSelect">
+      <label for="group">Wähle Gruppe:</label>
+      <select id="group">
+        <option value="gruppe1">Gruppe 1</option>
+        <option value="gruppe2">Gruppe 2</option>
+      </select>
+    </div>
+
+    <div id="chatContainer">
+      <div id="chatBox"></div>
+      <div id="resizer"></div>
+    </div>
+    <input type="text" id="userInput" placeholder="Schreibe eine Nachricht..." />
+    <button onclick="sendMessage()">Senden</button>
+  </div>
+
+  <div id="rightSide">
+    <h2>KI Chat - Hilfe & Themen</h2>
+    <div id="kiChatBox"></div>
+    <div id="kiInputArea">
+      <input type="text" id="kiInput" placeholder="Frage oder Thema eingeben..." />
+      <button onclick="sendKiMessage()">Senden</button>
+    </div>
+  </div>
+
+  <div id="discordLink">
+    <a href="https://discord.gg/A2D97gjP" target="_blank">Discord Server</a>
+  </div>
+</div>
+
+<script>
+// Willkommen
+function enterWebsite(){
+  document.getElementById('welcomeScreen').style.display='none';
+  document.getElementById('mainContent').style.display='flex';
+  document.getElementById('rightSide').style.display='flex';
+}
+
+// Sterne generieren
+const starsContainer=document.getElementById('stars');
+for(let i=0;i<250;i++){
+  const s=document.createElement('div');
+  s.classList.add('star');
+  s.style.left=Math.random()*100+'%';
+  s.style.top=Math.random()*100+'%';
+  s.style.width=Math.random()*2+1+'px';
+  s.style.height=s.style.width;
+  s.style.animationDuration=(Math.random()*3+1)+'s';
+  starsContainer.appendChild(s);
+}
+
+// Kometen generieren
+const cometsContainer=document.getElementById('comets');
+for(let i=0;i<10;i++){
+  const c=document.createElement('div');
+  c.classList.add('comet');
+  c.style.left=Math.random()*window.innerWidth-200+'px';
+  c.style.top=Math.random()*window.innerHeight-200+'px';
+  c.style.animationDuration=(Math.random()*5+5)+'s';
+  c.style.animationDelay=(Math.random()*10)+'s';
+  c.style.width=Math.random()*3+2+'px';
+  c.style.height=c.style.width;
+  cometsContainer.appendChild(c);
+}
+
+// Gruppenchat
+const isOwner=true;
+let chats={gruppe1:[], gruppe2:[]};
+function sendMessage(){
+  const input=document.getElementById('userInput').value.trim();
+  const group=document.getElementById('group').value;
+  if(!input) return;
+  const sender=isOwner?"Inhaber":"Besucher";
+  chats[group].push({sender,text:input});
+  updateChatBox(group);
+  document.getElementById('userInput').value='';
+}
+function updateChatBox(group){
+  const chatBox=document.getElementById('chatBox');
+  chatBox.innerHTML=chats[group].map(m=>`<b>${m.sender}:</b> ${m.text}`).join('<br>');
+  chatBox.scrollTop=chatBox.scrollHeight;
+}
+document.getElementById('group').addEventListener('change',e=>updateChatBox(e.target.value));
+updateChatBox(document.getElementById('group').value);
+
+// Resize Gruppenchat
+const resizer=document.getElementById('resizer');
+const chatContainer=document.getElementById('chatContainer');
+let origW,origH,origX,origY;
+resizer.addEventListener('mousedown',e=>{
+  e.preventDefault();
+  origW=chatContainer.offsetWidth; origH=chatContainer.offsetHeight;
+  origX=e.pageX; origY=e.pageY;
+  window.addEventListener('mousemove',resize);
+  window.addEventListener('mouseup',stopResize);
+});
+function resize(e){
+  const w=origW+(e.pageX-origX);
+  const h=origH+(e.pageY-origY);
+  if(w>200) chatContainer.style.width=w+'px';
+  if(h>150) chatContainer.style.height=h+'px';
+}
+function stopResize(){
+  window.removeEventListener('mousemove',resize);
+  window.removeEventListener('mouseup',stopResize);
+}
+
+// KI Chat
+let kiChats=[];
+const witze=[
+  "Was macht ein Pirat am Computer? Er drückt die Enter-Taste!",
+  "Warum können Geister so schlecht lügen? Weil man durch sie hindurchsieht!",
+  "Warum ging der Pilz auf die Party? Weil er ein Champignon war!",
+  "Warum können Bienen so gut rechnen? Sie summen die Zahlen zusammen!",
+  "Was ist orange und läuft durch den Wald? Eine Wanderine!",
+  // ... viele weitere Witze einfügen
+];
+const hilfe={
+  chat:"Im Gruppenchat kannst du dich mit anderen Besuchern austauschen.",
+  ki:"Die KI hilft bei Witzen, Infos oder Aufgaben.",
+  zeit:"Die KI kann die aktuelle Uhrzeit anzeigen.",
+  website:"Die KI gibt Tipps zur Webseite.",
+  links:"TikTok und Discord Links befinden sich oben bzw. unten."
+};
+
+function sendKiMessage(){
+  const input=document.getElementById('kiInput').value.trim();
+  if(!input) return;
+  kiChats.push({sender:"Du", text:input});
+  kiChats.push({sender:"KI", text:simulateKiResponse(input)});
+  updateKiChatBox();
+  document.getElementById('kiInput').value='';
+}
+
+function simulateKiResponse(text){
+  const txt=text.toLowerCase();
+  if(txt.includes("witz")) return witze[Math.floor(Math.random()*witze.length)];
+  if(txt.includes("zeit")) return "Aktuelle Uhrzeit: "+new Date().toLocaleTimeString();
+  if(txt.includes("hilfe")||txt.includes("info")){
+    for(let key in hilfe) if(txt.includes(key)) return hilfe[key];
+    return "Ich kann bei folgenden Themen helfen: Chat, KI, Zeit, Website, Links, Witze.";
+  }
+  return "Sorry, das habe ich nicht verstanden. Versuch 'Hilfe [Thema]', 'Witz' oder 'Zeit'.";
+}
+
+function updateKiChatBox(){
+  const kiChatBox=document.getElementById('kiChatBox');
+  kiChatBox.innerHTML=kiChats.map(m=>`<b>${m.sender}:</b> ${m.text}`).join('<br>');
+  kiChatBox.scrollTop=kiChatBox.scrollHeight;
+}
+
+// Drag & Drop KI Chat
+const kiBox=document.getElementById('rightSide');
+let isDragging=false,offsetX,offsetY;
+kiBox.addEventListener('mousedown',e=>{
+  if(e.target.tagName==="INPUT"||e.target.tagName==="BUTTON") return;
+  isDragging=true;
+  offsetX=e.clientX-kiBox.offsetLeft;
+  offsetY=e.clientY-kiBox.offsetTop;
+  kiBox.style.cursor="grabbing";
+});
+document.addEventListener('mousemove',e=>{
+  if(!isDragging) return;
+  kiBox.style.left=(e.clientX-offsetX)+'px';
+  kiBox.style.top=(e.clientY-offsetY)+'px';
+});
+document.addEventListener('mouseup',e=>{
+  if(isDragging){ isDragging=false; kiBox.style.cursor="move"; }
+});
+</script>
+
+</body>
+</html>
